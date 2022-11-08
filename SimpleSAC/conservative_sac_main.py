@@ -27,7 +27,7 @@ FLAGS_DEF = define_flags_with_default(
     max_traj_length=1000,
     seed=42,
     device='cuda',
-    save_model=False,
+    save_model=True,
     batch_size=256,
 
     reward_scale=1.0,
@@ -40,9 +40,10 @@ FLAGS_DEF = define_flags_with_default(
     policy_log_std_multiplier=1.0,
     policy_log_std_offset=-1.0,
 
-    n_epochs=2000,
+    n_epochs=1000,
     bc_epochs=0,
     n_train_step_per_epoch=1000,
+
     eval_period=10,
     eval_n_trajs=5,
 
@@ -55,14 +56,14 @@ def main(argv):
     FLAGS = absl.flags.FLAGS
 
     variant = get_user_flags(FLAGS, FLAGS_DEF)
-    wandb_logger = WandBLogger(config=FLAGS.logging, variant=variant)
-    setup_logger(
+    log_dir = setup_logger(
+        exp_prefix=FLAGS.env,
         variant=variant,
-        exp_id=wandb_logger.experiment_id,
         seed=FLAGS.seed,
         base_log_dir=FLAGS.logging.output_dir,
         include_exp_prefix_sub_dir=False
     )
+    wandb_logger = WandBLogger(config=FLAGS.logging, variant=variant, env=str(FLAGS.env), seed=str(FLAGS.seed), log_dir=log_dir)
 
     set_random_seed(FLAGS.seed)
 
@@ -127,7 +128,7 @@ def main(argv):
                 )
                 if FLAGS.save_model:
                     save_data = {'sac': sac, 'variant': variant, 'epoch': epoch}
-                    wandb_logger.save_pickle(save_data, 'model.pkl')
+                    wandb_logger.save_pickle(save_data, f'model_{epoch}.pkl')
 
         metrics['train_time'] = train_timer()
         metrics['eval_time'] = eval_timer()
@@ -139,7 +140,7 @@ def main(argv):
 
     if FLAGS.save_model:
         save_data = {'sac': sac, 'variant': variant, 'epoch': epoch}
-        wandb_logger.save_pickle(save_data, 'model.pkl')
+        wandb_logger.save_pickle(save_data, 'model_last.pkl')
 
 if __name__ == '__main__':
     absl.app.run(main)

@@ -42,21 +42,25 @@ class WandBLogger(object):
     @staticmethod
     def get_default_config(updates=None):
         config = ConfigDict()
-        config.online = False
-        config.prefix = 'SimpleSAC'
-        config.project = 'sac'
+        config.online = True
+        config.prefix = 'ICLR'
+        config.project = 'CQL'
+        config.entity = 'mdsac'
         config.output_dir = '/tmp/SimpleSAC'
         config.random_delay = 0.0
         config.experiment_id = config_dict.placeholder(str)
         config.anonymous = config_dict.placeholder(str)
         config.notes = config_dict.placeholder(str)
-
+        
         if updates is not None:
             config.update(ConfigDict(updates).copy_and_resolve_references())
         return config
 
-    def __init__(self, config, variant):
+    def __init__(self, config, variant, env, seed, log_dir):
         self.config = self.get_default_config(config)
+        self.config.env = env
+        self.config.seed = seed
+
 
         if self.config.experiment_id is None:
             self.config.experiment_id = uuid.uuid4().hex
@@ -67,7 +71,7 @@ class WandBLogger(object):
         if self.config.output_dir == '':
             self.config.output_dir = tempfile.mkdtemp()
         else:
-            self.config.output_dir = os.path.join(self.config.output_dir, self.config.experiment_id)
+            self.config.output_dir = log_dir
             os.makedirs(self.config.output_dir, exist_ok=True)
 
         self._variant = copy(variant)
@@ -82,7 +86,10 @@ class WandBLogger(object):
             reinit=True,
             config=self._variant,
             project=self.config.project,
+            entity=self.config.entity,
             dir=self.config.output_dir,
+            name=self.config.seed,
+            group=self.config.env,
             id=self.config.experiment_id,
             anonymous=self.config.anonymous,
             notes=self.config.notes,

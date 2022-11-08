@@ -345,7 +345,7 @@ def create_exp_name(exp_prefix, exp_id=0, seed=0):
     """
     now = datetime.datetime.now(dateutil.tz.tzlocal())
     timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
-    return "%s_%s-s-%d--%s" % (exp_prefix, timestamp, seed, str(exp_id))
+    return "%s_%d" % (exp_prefix, seed)
 
 
 def create_log_dir(
